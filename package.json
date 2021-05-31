@@ -1,6 +1,6 @@
 {
   "name": "@nebohq/nebo",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "description": "Builds embeddable components from https://nebohq.com",
   "main": "lib/cjs/index.js",
   "module": "src/index.js",
