@@ -7,7 +7,6 @@ import { kebabCase } from './Utils';
 const HTML = (react) => {
   const components = HTML.getComponents(react);
   return htmlTags.reduce((acc, tag) => {
-    // eslint-disable-next-line no-unused-vars
     const component = tag in components ? components[tag] : HTML.getComponent(react, tag);
     component.displayName = tag;
     component.expectedProps ||= {};
@@ -65,6 +64,22 @@ HTML.getComponents = (react) => ({
     expectedProps: {
       src: new Prop({ name: 'src', type: Type.types.image, value: '' }),
       alt: new Prop({ name: 'alt', type: Type.types.string, value: '' }),
+    },
+  }),
+  a: Object.assign(HTML.getComponent(react, 'a'), {
+    expectedProps: {
+      href: new Prop({ name: 'href', type: Type.types.string, value: '' }),
+      target: new Prop({
+        name: 'target',
+        type: Type.types.options,
+        value: '_self',
+        options: {
+          'Current Tab': '_self',
+          'New Tab': '_blank',
+          Parent: '_parent',
+          Top: '_top',
+        },
+      }),
     },
   }),
 });
