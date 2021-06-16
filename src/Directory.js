@@ -4,6 +4,7 @@ import Registry from './Registry';
 import Schema from './Schema';
 import { associatePropType, Storage } from './Utils';
 import HTML from './HTML';
+import useHead from './Renderer/useHead';
 
 class Directory {
   constructor({
@@ -62,6 +63,10 @@ class Directory {
     const component = Component.build(nameOrId, this);
     this.cache[nameOrId] = component;
     return component;
+  }
+
+  getHead() {
+    return useHead.state;
   }
 
   convert(components) {

@@ -5,6 +5,7 @@ import {
   displaySizes, classNames, capitalize, ContentWindow,
 } from './Utils';
 import Parametrizer from './Renderer/Parametrizer';
+import useHead from './Renderer/useHead';
 
 const Renderer = ({
   nebo, children, className, style, ...props
@@ -19,6 +20,11 @@ const Renderer = ({
   } = nebo;
 
   const { size } = Renderer.useMatchMedia(directory, contentWindow.matchMedia);
+  useHead({
+    metadata: { ...(schema.metadata || {}) },
+    React: directory.React,
+    contentWindow,
+  });
 
   return Renderer.convert({
     component: schema.root,
