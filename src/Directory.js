@@ -65,7 +65,8 @@ class Directory {
     return component;
   }
 
-  getHead() {
+  getHead(metadata = null) {
+    if (metadata) return new useHead.State(metadata, this.React);
     return useHead.state;
   }
 
