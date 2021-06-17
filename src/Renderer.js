@@ -25,6 +25,7 @@ const Renderer = ({
     React: directory.React,
     contentWindow,
   });
+  registry.dequeueClear();
 
   return Renderer.convert({
     component: schema.root,

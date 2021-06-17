@@ -8,12 +8,19 @@ class Registry extends Enumerable {
   }
 
   add(neboComponent, reactComponent) {
+    if (neboComponent.id in this.map) {
+      const existing = this.map[neboComponent.id];
+      Object.assign(existing, { nebo: neboComponent, react: reactComponent });
+      return this;
+    }
+
     const entry = new Registry.Entry({
       react: reactComponent,
       nebo: neboComponent,
     });
-    this.map[reactComponent.key] = entry;
+    this.map[neboComponent.id] = entry;
     this.entries.push(entry);
+
     return this;
   }
 
@@ -30,7 +37,16 @@ class Registry extends Enumerable {
     return this.entries;
   }
 
+  enqueueClear() {
+    this.shouldClear = true;
+  }
+
+  dequeueClear() {
+    if (this.shouldClear) this.clear();
+  }
+
   clear() {
+    this.map = {};
     this.entries = [];
   }
 }
