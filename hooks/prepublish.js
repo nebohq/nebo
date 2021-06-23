@@ -1,3 +1,3 @@
 const { modifyPackage } = require('./utils');
 
-modifyPackage({ module: 'lib/cjs/index.js' });
+modifyPackage({ module: 'lib/esm/index.js' });
