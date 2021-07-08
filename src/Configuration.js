@@ -1,10 +1,17 @@
 import Directory from './Directory';
 import Component from './Component';
 import Renderer from './Renderer';
-import { ContentWindow, neboURL } from './Utils';
+import { ContentWindow } from './Utils';
 
 const window = ContentWindow;
-const isNebo = () => window.location.origin === neboURL;
+// eslint-disable-next-line no-unused-vars,no-undef
+const environment = typeof __ENV__ === 'undefined' ? 'development' : __ENV__;
+const isNebo = () => {
+  if (environment === 'development') {
+    return /http:\/\/(.*?\.)?localhost:3000/.test(window.location.origin || '');
+  }
+  return /https:\/\/(.*?\.)nebohq.com/.test(window.location.origin || '');
+};
 
 const configure = ({
   accessToken,
