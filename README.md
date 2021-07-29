@@ -25,28 +25,19 @@ yarn add @nebohq/nebo
 
 <img alt="Access Token" height="150px" src="https://res.cloudinary.com/hzimreaxl/image/upload/v1622158327/setup-developers.png"/>
 
-4. Create a configuration file for nebo and name it `nebo-config.js`. It usually looks something like this:
+4. Use the Nebo plugin to set up your repository. Change the command below with your access token, static assets path, and global styles path.  
 
-```js
-import { configure } from '@nebohq/nebo';
-import React from 'react';
-import ReactDOM from 'react-dom';
-// Add your styles here
+```shell
+# with npm
+npx nebo init --access-token=your-access-token --public-path=./path/to/static/assets --global-styles-path=./src/stylesheets/application.scss
 
-const directory = configure({
-  directory: {
-    // Add your components here
-  },
-  react: React,
-  renderer: ReactDOM,
-  // fill in your access token here
-  accessToken: '[ACCESS_TOKEN]',
-});
-
-export default directory;
+# with yarn
+yarn run nebo init --access-token=your-access-token --public-path=./path/to/static/assets --global-styles-path=./src/stylesheets/application.scss
 ```
 
-4. You're now ready to build components in Nebo!
+5. This will generate two files: `nebo.config.js` and `nebo.webpack.js`. We'll use the first to import components and the latter output Nebo assets for use in settings.
+
+6. You're ready to build pages!
 
 ## How to use
 ### Adding pages
@@ -73,146 +64,98 @@ export default directory;
 8. Once you've saved your page, import it in an appropriate place for your app.
 
 ```js
-import Component from '@nebo/nebohq';
+import NeboComponent from './nebo.config.js'; // change this path to point to your Nebo directory configuration
 
 const YourComponent = () => {
-  return <Component slug="YOUR SLUG NAME HERE" />; 
+  return <NeboComponent slug="YOUR SLUG NAME HERE" />; 
 }
 ```
 
 ### Adding your styles
-1. Create a new `css`/`scss` file called `nebo-config.ccss`.
+1. Go to `nebo.webpack.js`.
 
-2. Include any relevant css files, like so:
+2. Change the `globalStylesPath` option to point to your global styles.
 
 ```scss
-@import "variables";
-@import "~bootstrap/scss/bootstrap.scss";
-@import "~prismjs/themes/prism";
-```
-
-3. Package this file into a single, static file:
-
-- If you're using Webpack:
-
-```js
-// webpack.config.js
 module.exports = {
-  ...yourOtherOptions,
-  module: {
-    ...otherModuleConfigs,
-    rules: [
-      ...otherRules,
-      // Modify your existing CSS/SCSS rules
-      {
-        test: /\.css$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              // Replace the paths with your CSS paths
-              filename: ({ name }) => {
-                if (name === 'nebo-config') return 'css/nebo-config.css';
-                return 'css/[name]-[contenthash:8].css';
-              }
-            },
-          },
-          'css-loader',
-        ],
-      },
-    ],
-  },
-}
-```
-
-- If you're using Ruby on Rails and Webpacker:
-
-```js
-// environment.js
-const { environment } = require('@rails/webpacker');
-
-// Replace the paths with your CSS paths
-environment.plugins.get('MiniCssExtract').options.filename = ({ name }) => {
-  if (name === 'nebo-config') return 'css/nebo-config.css';
-  return 'css/[name]-[contenthash:8].css';
+  // other options
+  globalStylesPath: ["./src/stylesheets/application.scss", "./src/stylesheets/globals.css"],
 };
 ```
 
-4. Restart your webpack server. Now, you should see a new `nebo-config.css` being compiled.
+3. Run the following command to compile your Nebo assets. This will build two files `nebo.config.css` and `nebo.config.js`. It will also keep track as you change files.
+```shell
+# with npm
+npx nebo watch
 
-5. On the Nebo website, navigate to "Developer" settings in the Nebo App.
-   Add `[YOUR_DEVELOPMENT_URL]/nebo-config.css` or `[YOUR_PRODUCTION_URL]/nebo-config.css`<sup>1</sup> to "Javascript Source URL".
+# with yarn
+yarn run nebo watch
+```
 
-6. Your styles have now been imported!
+4. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo-config.css` (usually something like `localhost:3000/nebo.config.css`) to "CSS Source URL".
 
-<sup>1</sup> This will be available after you've deployed.
+5. Your styles have now been imported! You should see them after refreshing the Nebo editor.
+
+6. Before you commit your changes, please run the following commands. These will compile the Nebo assets for production.
+```shell
+# with npm
+npx nebo
+
+# with yarn
+yarn run nebo
+```
+
+7. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "CSS Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo-config.css`).
 
 
 ### Adding your component library
-1. In your code, navigate to the Nebo configuration file your created. Add your components in the indicated space.
-   Pass your components to the directory key like so:
+1. Run the following command to compile your Nebo assets. This will build two files `nebo.config.css` and `nebo.config.js`. It will also keep track as you change files.
+```shell
+# with npm
+npx nebo watch
+
+# with yarn
+yarn run nebo watch
+```
+
+2. Navigate to `nebo.config.js`. Add one of your components to the Nebo directory in the indicated place.
 
 ```js
-import { configure } from '@nebohq/nebo';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Nav, Container, Row, Col } from 'react-bootstrap';
-import { Linkedin } from 'react-bootstrap-icons';
+import Component, { configure, fetchComponent } from '@nebohq/nebo';
 
+const accessToken = '[ACCESS_TOKEN]';
 const directory = configure({
   directory: {
-    // ADD YOUR COMPONENTS HERE
-    Nav,
-    Icons: { LinkedIn },
-    Bootstrap: { Layout: { Container, Row, Col } }
+    // Add your components here
   },
   react: React,
   renderer: ReactDOM,
-  accessToken: '[YOUR_ACCESS_TOKEN]'
+  accessToken,
 });
 
-export default directory;
-```
+const fetchSchema = async (idOrSlug) => fetchComponent({ idOrSlug, accessToken });
 
-2. Package this file into a single static file.  
-- If you're using Webpack:
+const NeboComponent = Component;
+export default NeboComponent;
+export { directory, fetchSchema };
+``` 
 
-```js
-// webpack.config.js
-module.exports = {
-  entry: {
-    ...yourOtherEntries,
-    'nebo-config': ['path/to/nebo-config.js'], // Replace this with your path
-  },
-  output: {
-    filename: (pathData) => (
-      pathData.chunk.name === 'nebo-config' ? 'nebo-config.js' : '[name].[hash].bundle.js'
-    )
-  },
-  ...yourOtherOptions
-}
-```
-
-- If you're using Ruby on Rails and Webpacker:
-
-```js
-// environment.js
-const { environment } = require('@rails/webpacker');
-
-environment.config.set('output.filename', (pathData) => (
-  pathData.chunk.name === 'nebo-config' ? 'nebo-config.js' : '[name].[hash].bundle.js'
-));
-```
-
-3. Restart your webpack server. Now, you should see a new `nebo-config.js` being compiled.
-
-4. On the Nebo website, navigate to "Developer" settings in the Nebo App.
-   Add `[YOUR_DEVELOPMENT_URL]/nebo-config.js` or `[YOUR_PRODUCTION_URL]/nebo-config.js`<sup>1</sup> to "Javascript Source URL".
+3. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo-config.js` (usually something like `localhost:3000/nebo.config.js`) to "Javascript Source URL".
    
-5. Your component library has now been imported!
+4. Your component component has now been imported! You should see it in the library dropdown under "Imported Components".
 
-<sup>1</sup> This will be available after you've deployed.
+5. Before you commit your changes, please run the following commands. These will compile the Nebo assets for production.
+```shell
+# with npm
+npx nebo
 
+# with yarn
+yarn run nebo
+```
+
+6. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "JavaScript Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo-config.js`).
 
 ## Questions and feedback
 If you have questions about Nebo or want to provide us feedback, [join our discord](https://discord.gg/eYZZkJV992)!
