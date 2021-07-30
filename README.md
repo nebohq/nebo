@@ -35,7 +35,7 @@ npx nebo init --access-token=your-access-token --public-path=./path/to/static/as
 yarn run nebo init --access-token=your-access-token --public-path=./path/to/static/assets --global-styles-path=./src/stylesheets/application.scss
 ```
 
-5. This will generate two files: `nebo.config.js` and `nebo.webpack.js`. We'll use the first to import components and the latter output Nebo assets for use in settings.
+5. This will generate two files: `nebo.js` and `nebo.js`. We'll use the first to import components and the latter output Nebo assets for use in settings.
 
 6. You're ready to build pages!
 
@@ -64,7 +64,7 @@ yarn run nebo init --access-token=your-access-token --public-path=./path/to/stat
 8. Once you've saved your page, import it in an appropriate place for your app.
 
 ```js
-import NeboComponent from './nebo.config.js'; // change this path to point to your Nebo directory configuration
+import NeboComponent from './nebo.js'; // change this path to point to your Nebo directory configuration
 
 const YourComponent = () => {
   return <NeboComponent slug="YOUR SLUG NAME HERE" />; 
@@ -72,7 +72,7 @@ const YourComponent = () => {
 ```
 
 ### Adding your styles
-1. Go to `nebo.webpack.js`.
+1. Go to `nebo.js`.
 
 2. Change the `globalStylesPath` option to point to your global styles.
 
@@ -83,7 +83,7 @@ module.exports = {
 };
 ```
 
-3. Run the following command to compile your Nebo assets. This will build two files `nebo.config.css` and `nebo.config.js`. It will also keep track as you change files.
+3. Run the following command to compile your Nebo assets. This will build two files `nebo.css` and `nebo.js`. It will also keep track as you change files.
 ```shell
 # with npm
 npx nebo watch
@@ -92,7 +92,7 @@ npx nebo watch
 yarn run nebo watch
 ```
 
-4. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo-config.css` (usually something like `localhost:3000/nebo.config.css`) to "CSS Source URL".
+4. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo.css` (usually something like `localhost:3000/nebo.css`) to "CSS Source URL".
 
 5. Your styles have now been imported! You should see them after refreshing the Nebo editor.
 
@@ -105,11 +105,11 @@ npx nebo
 yarn run nebo
 ```
 
-7. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "CSS Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo-config.css`).
+7. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "CSS Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo.css`).
 
 
 ### Adding your component library
-1. Run the following command to compile your Nebo assets. This will build two files `nebo.config.css` and `nebo.config.js`. It will also keep track as you change files.
+1. Run the following command to compile your Nebo assets. This will build two files `nebo.css` and `nebo.js`. It will also keep track as you change files.
 ```shell
 # with npm
 npx nebo watch
@@ -118,7 +118,7 @@ npx nebo watch
 yarn run nebo watch
 ```
 
-2. Navigate to `nebo.config.js`. Add one of your components to the Nebo directory in the indicated place.
+2. Navigate to `nebo.js`. Add one of your components to the Nebo directory in the indicated place.
 
 ```js
 import React from 'react';
@@ -142,7 +142,7 @@ export default NeboComponent;
 export { directory, fetchSchema };
 ``` 
 
-3. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo-config.js` (usually something like `localhost:3000/nebo.config.js`) to "Javascript Source URL".
+3. On the Nebo website, navigate to "Developer" settings in the Nebo App. Add `[YOUR_DEVELOPMENT_URL]/nebo.js` (usually something like `localhost:3000/nebo.js`) to "Javascript Source URL".
    
 4. Your component component has now been imported! You should see it in the library dropdown under "Imported Components".
 
@@ -155,7 +155,7 @@ npx nebo
 yarn run nebo
 ```
 
-6. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "JavaScript Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo-config.js`).
+6. After you've deployed your changes, navigate to "Developer" settings in the Nebo App. Switch the "JavaScript Source URL" to the path of your production Nebo asset (usually `[YOUR_PRODUCTION_URL]/nebo.js`).
 
 ## Questions and feedback
 If you have questions about Nebo or want to provide us feedback, [join our discord](https://discord.gg/eYZZkJV992)!
