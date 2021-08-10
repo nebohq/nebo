@@ -37,23 +37,25 @@ const Component = ({
     schema: computedSchema, passedShouldFetch, directory, lookupBy,
   }), []));
 
-  useEffect(async () => {
+  useEffect(() => {
     if (!shouldFetch || !lookupBy) return;
 
-    const componentJSON = await fetchComponent({
-      idOrSlug: lookupBy,
-      accessToken: directory.accessToken,
-    });
-    if (!isNullish(fetchComponent)) {
-      const fetchedSchema = Schema.parseComponentJSON(componentJSON);
-      if (shouldCache) {
-        directory.schemas[fetchedSchema.id] = fetchedSchema;
-        Component.parseSubSchemas(componentJSON.subschemas || [], directory);
-        if (slug) directory.schemas[slug] = fetchedSchema;
+    (async () => {
+      const componentJSON = await fetchComponent({
+        idOrSlug: lookupBy,
+        accessToken: directory.accessToken,
+      });
+      if (!isNullish(fetchComponent)) {
+        const fetchedSchema = Schema.parseComponentJSON(componentJSON);
+        if (shouldCache) {
+          directory.schemas[fetchedSchema.id] = fetchedSchema;
+          Component.parseSubSchemas(componentJSON.subschemas || [], directory);
+          if (slug) directory.schemas[slug] = fetchedSchema;
+        }
+        setLoadedSchema(fetchedSchema);
       }
-      setLoadedSchema(fetchedSchema);
-    }
-    setShouldFetch(false);
+      setShouldFetch(false);
+    })();
   }, [shouldFetch]);
 
   useEffect(() => {
