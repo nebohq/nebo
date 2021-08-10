@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+import { uuid } from '../Utils';
 import Prop from '../Prop';
 import Type from '../Type';
 
