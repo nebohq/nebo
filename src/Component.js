@@ -48,6 +48,7 @@ const Component = ({
       const fetchedSchema = Schema.parseComponentJSON(componentJSON);
       if (shouldCache) {
         directory.schemas[fetchedSchema.id] = fetchedSchema;
+        Component.parseSubSchemas(componentJSON.subschemas || [], directory);
         if (slug) directory.schemas[slug] = fetchedSchema;
       }
       setLoadedSchema(fetchedSchema);
@@ -82,11 +83,20 @@ Component.computeDefaultSchema = ({
   passedSchema, directory, lookupBy,
 }) => {
   const schema = passedSchema || directory.schemas[lookupBy] || null;
+  Component.parseSubSchemas(passedSchema?.subschemas || [], directory);
   let computedSchema = schema;
   if (!isNullish(schema)) {
     computedSchema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
   }
   return computedSchema;
+};
+
+Component.parseSubSchemas = (subschemas, directory) => {
+  subschemas.forEach((subschema) => {
+    directory.schemas[subschema.id] = (
+      subschema?.isSchema ? subschema : Schema.parseComponentJSON(subschema)
+    );
+  });
 };
 
 Component.computeDefaultShouldFetch = ({
