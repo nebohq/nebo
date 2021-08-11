@@ -2,7 +2,7 @@ import htmlTags from 'html-tags';
 import voidHtmlTags from 'html-tags/void';
 import Prop from './Prop';
 import Type from './Type';
-import { kebabCase } from './Utils';
+import { canUseDOM, kebabCase } from './Utils';
 
 const HTML = (react) => {
   const components = HTML.getComponents(react);
@@ -24,7 +24,8 @@ HTML.getComponent = (react, tag) => {
   }, forwardedRef) => {
     const ref = react.useRef(null);
 
-    react.useLayoutEffect(() => {
+    const useLayoutEffect = canUseDOM ? react.useLayoutEffect : () => {};
+    useLayoutEffect(() => {
       if (!ref.current) return;
 
       const node = ref.current;
