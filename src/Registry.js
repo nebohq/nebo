@@ -56,6 +56,7 @@ Registry.Entry = class Entry {
     this.react = react;
     this.nebo = nebo;
     this.dom = null;
+    this.keyMatcher = new RegExp(`${this.react.key}$`);
   }
 
   findNode(fiber, foundParent = false) {
@@ -63,7 +64,7 @@ Registry.Entry = class Entry {
     if (foundParent && fiber.stateNode?.addEventListener) return fiber.stateNode;
 
     // eslint-disable-next-line no-param-reassign
-    if (fiber.key === this.react.key || fiber.key === `.$${this.react.key}`) foundParent = true;
+    if (this.keyMatcher.test(fiber.key)) foundParent = true;
 
     const child = this.findNode(fiber.child, foundParent);
     if (child) return child;
