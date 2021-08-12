@@ -5,6 +5,7 @@ class Registry extends Enumerable {
     super();
     this.map = {};
     this.entries = [];
+    this.onClearCallback = () => {};
   }
 
   add(neboComponent, reactComponent) {
@@ -48,6 +49,11 @@ class Registry extends Enumerable {
   clear() {
     this.map = {};
     this.entries = [];
+    if (setTimeout) setTimeout(this.onClearCallback, 0);
+  }
+
+  onClear(callback) {
+    this.onClearCallback = callback || (() => {});
   }
 }
 
