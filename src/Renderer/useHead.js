@@ -89,9 +89,10 @@ useHead.State = class State {
     const components = Object.entries(this.metadata).map(([attribute, value]) => {
       let component;
       if (attribute === 'title') {
-        component = this.React.createElement('title', {}, value);
+        component = this.React.createElement('title', { key: `meta-${attribute}` }, value);
       } else {
         component = this.React.createElement('meta', {
+          key: `meta-${attribute}`,
           name: attribute,
           content: value,
         });

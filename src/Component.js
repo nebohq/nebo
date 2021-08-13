@@ -28,7 +28,7 @@ const Component = ({
     contentWindow = ContentWindow,
   } = nebo;
 
-  const lookupBy = id || slug;
+  const lookupBy = id || slug || passedSchema?.id;
   const computedSchema = useMemo(() => (
     Component.computeDefaultSchema({ passedSchema, directory, lookupBy })
   ), []);
