@@ -32,7 +32,7 @@ const Component = ({
   const computedSchema = useMemo(() => (
     Component.computeDefaultSchema({ passedSchema, directory, lookupBy })
   ), []);
-  const [loadedSchema, setLoadedSchema] = useState(canUseDOM ? null : computedSchema);
+  const [loadedSchema, setLoadedSchema] = useState(computedSchema);
   const [shouldFetch, setShouldFetch] = useState(useMemo(() => Component.computeDefaultShouldFetch({
     schema: computedSchema, passedShouldFetch, directory, lookupBy,
   }), []));
