@@ -1,10 +1,7 @@
-import Renderer from './Renderer';
+import { ContentWindow, isNullish, fetchComponent } from './Utils';
 import Schema from './Schema';
-import Type from './Type';
-import Prop from './Prop';
+import Renderer from './Renderer';
 import Registry from './Registry';
-import { canUseDOM, ContentWindow, isNullish } from './Utils';
-import fetchComponent from './Utils/fetchComponent';
 
 const Component = ({
   id = null,
@@ -14,172 +11,94 @@ const Component = ({
   children,
   ...props
 }) => {
-  const { directory } = Component; // set on configure call
-  const {
-    React: {
-      useState, useEffect, useMemo, createElement,
-    },
-  } = directory;
-  const {
-    elementType = Component.build(id, directory),
-    shouldCache = true,
-    shouldFetch: passedShouldFetch = true,
-    registry = new Registry(),
-    contentWindow = ContentWindow,
-  } = nebo;
-
   const lookupBy = id || slug || passedSchema?.id;
-  const computedSchema = useMemo(() => (
-    Component.computeDefaultSchema({ passedSchema, directory, lookupBy })
-  ), []);
-  const [loadedSchema, setLoadedSchema] = useState(computedSchema);
-  const [shouldFetch, setShouldFetch] = useState(useMemo(() => Component.computeDefaultShouldFetch({
-    schema: computedSchema, passedShouldFetch, directory, lookupBy,
-  }), []));
+  const { registry = new Registry(), contentWindow = ContentWindow } = nebo;
 
-  useEffect(() => {
+  const [activeSchema, setActiveSchema] = Component.useSchema({ lookupBy, passedSchema });
+  const [shouldFetch, setShouldFetch] = Component.useShouldFetch({
+    forceFetch: nebo.shouldFetch,
+    activeSchema,
+    lookupBy,
+  });
+
+  Component.React.useEffect(() => {
     if (!shouldFetch || !lookupBy) return;
 
     (async () => {
-      const componentJSON = await fetchComponent({
+      const schemaJSON = await fetchComponent({
         idOrSlug: lookupBy,
-        accessToken: directory.accessToken,
+        accessToken: Component.directory.accessToken,
       });
-      if (!isNullish(fetchComponent)) {
-        const fetchedSchema = Schema.parseComponentJSON(componentJSON);
-        if (shouldCache) {
-          directory.schemas[fetchedSchema.id] = fetchedSchema;
-          Component.parseSubSchemas(componentJSON.subschemas || [], directory);
-          if (slug) directory.schemas[slug] = fetchedSchema;
-        }
-        setLoadedSchema(fetchedSchema);
-      }
+      setActiveSchema(Schema.parseComponentJSON(schemaJSON));
       setShouldFetch(false);
     })();
-  }, [shouldFetch]);
+  }, [shouldFetch, lookupBy]);
 
-  useEffect(() => {
-    if (loadedSchema === null) return;
-    Component.configure(elementType, loadedSchema.id, loadedSchema);
-  }, [loadedSchema]);
+  if (!activeSchema) return null;
 
-  useEffect(() => {
-    setLoadedSchema(computedSchema);
-  }, []);
-
-  if (loadedSchema === null) return null;
-
-  return createElement(Renderer, {
+  return Component.React.createElement(Renderer, {
     nebo: {
-      schema: loadedSchema,
-      shouldCache,
+      schema: activeSchema,
       registry,
       contentWindow,
-      shouldFetch: passedShouldFetch,
+      shouldFetch: nebo.shouldFetch,
     },
     ...props,
   }, children);
 };
 
-Component.computeDefaultSchema = ({
-  passedSchema, directory, lookupBy,
-}) => {
-  const schema = passedSchema || directory.schemas[lookupBy] || null;
-  Component.parseSubSchemas(passedSchema?.subschemas || [], directory);
-  let computedSchema = schema;
-  if (!isNullish(schema)) {
-    computedSchema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
-  }
-  return computedSchema;
-};
+Component.useSchema = ({ lookupBy, passedSchema }) => {
+  const { schemas: schemaCache } = Component.directory;
+  const computedSchema = Component.React.useMemo(() => {
+    let schema = passedSchema || schemaCache[lookupBy] || null;
+    if (!isNullish(schema)) schema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
 
-Component.parseSubSchemas = (subschemas, directory) => {
-  subschemas.forEach((subschema) => {
-    directory.schemas[subschema.id] = (
-      subschema?.isSchema ? subschema : Schema.parseComponentJSON(subschema)
-    );
+    return schema;
+  }, [lookupBy, passedSchema]);
+
+  const [activeSchema, setSchema] = Component.React.useState(() => {
+    Component.cache({ schema: computedSchema });
+    return computedSchema;
   });
+  const setActiveSchema = (schema) => {
+    Component.cache({ schema });
+    setSchema(schema);
+  };
+
+  Component.React.useEffect(() => {
+    setActiveSchema(computedSchema);
+  }, [computedSchema]);
+
+  return [activeSchema, setActiveSchema];
 };
 
-Component.computeDefaultShouldFetch = ({
-  schema, passedShouldFetch, directory, lookupBy,
-}) => {
-  let computedShouldFetch = !schema;
-  if (passedShouldFetch) {
-    computedShouldFetch = (
-      new Date() - directory.schemas.cachedAt[lookupBy]
-    ) > directory.cacheForMillis;
-  }
-  return computedShouldFetch;
+Component.useShouldFetch = ({ forceFetch, activeSchema, lookupBy }) => {
+  const computedShouldFetch = Component.React.useMemo(() => {
+    if (typeof forceFetch !== 'undefined') return activeSchema ? forceFetch : true;
+
+    return !activeSchema || Component.directory.schemaCache.isExpired(lookupBy);
+  }, [forceFetch, !activeSchema, lookupBy]);
+  const [shouldFetch, setShouldFetch] = Component.React.useState(computedShouldFetch);
+
+  Component.React.useEffect(() => {
+    setShouldFetch(computedShouldFetch);
+  }, [computedShouldFetch]);
+
+  return [shouldFetch, setShouldFetch];
 };
 
-Component.build = (id, directory) => {
-  const component = (({ children, ...props }) => directory.React.createElement(Component, {
-    id,
-    nebo: { elementType: component },
-    ...props,
-  }, children));
+Component.cache = ({ schema }) => {
+  if (!schema) return;
 
-  Object.assign(component, {
-    id,
-    isNebo: true,
-  });
+  const { schemas: schemaCache, neboComponents } = Component.directory;
 
-  if (id in directory.schemas) {
-    const schema = directory.schemas[id];
-    Component.configure(component, id, schema);
-  }
-
-  return component;
-};
-
-Component.configure = (elementType, id, schema) => {
-  Object.assign(elementType, {
-    displayName: schema.root.displayName,
-    componentType: schema.type,
-    params: schema.params,
-    isVoid: Component.isVoid(schema.root),
-    schema,
+  schemaCache[schema.id] = schema;
+  schemaCache[schema.slug] = schema;
+  schema.subschemas.forEach((subschema) => {
+    Component.cache({ schema: subschema });
   });
 
-  const propTypes = schema.params.reduce((accumulator, param) => {
-    const { type } = param;
-    const validator = param.isRequired ? type.requiredValidator : type.validator;
-    accumulator[param.name] = (...args) => validator(...args, param);
-    return accumulator;
-  }, {});
-
-  elementType.propTypes = propTypes;
-  elementType.defaultProps = schema.params.reduce((accumulator, param) => {
-    accumulator[param.name] = param.type.converter(param.defaultValue);
-    return accumulator;
-  }, {});
-
-  elementType.expectedProps = Object.keys(propTypes).reduce((acc, propName) => {
-    const params = (elementType.schema.params.params || {});
-    const param = params[propName];
-    const type = param?.type || Type.types.string;
-    const value = param?.defaultValue || '';
-    acc[propName] = new Prop({
-      name: propName,
-      type,
-      value,
-      options: param.options,
-    });
-    return acc;
-  }, {});
-};
-
-Component.isVoid = (component) => {
-  if (component.body?.type?.name === 'node') {
-    return false;
-  }
-  const children = [...(component.children || [])];
-  while (children.length > 0) {
-    const child = children.shift();
-    if (!Component.isVoid(child)) return false;
-  }
-  return true;
+  neboComponents.store(schema.id, { schema, cacheKeys: [schema.id, schema.slug] });
 };
 
 Component.types = {

@@ -123,12 +123,14 @@ Renderer.convert = ({
   } = Renderer.convertStyleAndClassName({ component, options, passedProps });
 
   const reactElementType = directory.get(name);
+  const componentClassName = classNames(convertedClassName, passedClassName);
+  const componentStyle = { ...convertedStyle, ...propStyle, ...passedStyle };
   const reactComponent = directory.React.createElement(
     reactElementType,
     {
       key: id,
-      style: { ...convertedStyle, ...propStyle, ...passedStyle },
-      className: classNames(convertedClassName, passedClassName),
+      ...(Object.keys(componentStyle).length > 0 && { style: componentStyle }),
+      ...(componentClassName && { className: componentClassName }),
       ...(reactElementType.isNebo && {
         nebo: {
           elementType: reactElementType,
@@ -139,7 +141,7 @@ Renderer.convert = ({
       }),
       ...convertedProps,
     },
-    convertedChildren,
+    convertedChildren.length > 0 ? convertedChildren : null,
   );
   registry.add(component, reactComponent);
   return reactComponent;

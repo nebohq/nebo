@@ -5,6 +5,7 @@ import Schema from './Schema';
 import { associatePropType, Storage } from './Utils';
 import HTML from './HTML';
 import useHead from './Renderer/useHead';
+import ComponentStore from './Component/Store';
 
 class Directory {
   constructor({
@@ -17,7 +18,7 @@ class Directory {
     schemaType = Schema,
   }) {
     this.React = react;
-    this.components = this.convert({
+    this.importedComponents = this.convert({
       ...components,
       HTML: HTML(react),
     });
@@ -31,7 +32,7 @@ class Directory {
     this.version = version;
 
     this.cacheForMillis = cacheForMillis;
-    this.cache = {};
+    this.neboComponents = new ComponentStore({ React: react, schemaCache: this.schemaCache });
     this.Renderer = Renderer;
     this.Registry = Registry;
     this.Component = Component;
@@ -45,24 +46,20 @@ class Directory {
     this.schemaCache = Storage('nebo.schemas', {
       parser: this.schemaCache.parser,
       override: newSchemas,
+      cacheFor: this.cacheForMillis,
     });
+    this.neboComponents.schemaCache = this.schemaCache;
   }
 
   get all() {
-    const neboComponents = Object.keys(this.schemas).reduce((acc, id) => {
-      acc[id] = this.get(id);
-      return acc;
-    }, {});
-    return { ...neboComponents, ...this.components };
+    return { ...this.neboComponents.all(), ...this.importedComponents };
   }
 
   get(nameOrId) {
-    if (nameOrId in this.components) return this.components[nameOrId];
-    if (nameOrId in this.cache) return this.cache[nameOrId];
+    if (nameOrId in this.importedComponents) return this.importedComponents[nameOrId];
+    if (this.neboComponents.get(nameOrId)) return this.neboComponents.get(nameOrId);
 
-    const component = Component.build(nameOrId, this);
-    this.cache[nameOrId] = component;
-    return component;
+    return this.neboComponents.store(nameOrId);
   }
 
   getHead(metadata = null) {

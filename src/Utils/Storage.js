@@ -4,6 +4,7 @@ const { localStorage } = ContentWindow;
 const Storage = (storageKey, {
   parser: passedParser = (value) => value,
   override = null,
+  cacheFor: cacheForMillis,
 }) => {
   const getKeyAsObject = (key) => (
     JSON.parse(localStorage.getItem(key) || 'null') || {}
@@ -20,6 +21,7 @@ const Storage = (storageKey, {
     {
       get: (target, property) => {
         if (property in target) return target[property];
+
         return new Date(0); // beginning of time
       },
       set: (target, property, value) => {
@@ -30,10 +32,15 @@ const Storage = (storageKey, {
     },
   );
 
+  const isCacheExpired = (key, atTime = new Date()) => (
+    (atTime - objectsCachedAt[key]) > cacheForMillis
+  );
+
   return new Proxy(storage, {
     get: (target, property) => {
       if (property === 'cachedAt') return objectsCachedAt;
       if (property === 'parser') return parser;
+      if (property === 'isExpired') return isCacheExpired;
 
       return property in target ? parser(target[property]) : undefined;
     },

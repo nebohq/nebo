@@ -24,6 +24,9 @@ class Schema {
       metadata: jsonComponent.metadata,
       root: jsonComponent.schema,
       params: jsonComponent.params,
+      subschemas: (jsonComponent.subschemas || []).map((subschema) => (
+        this.parseComponentJSON(subschema)
+      )),
     });
   }
 
@@ -38,6 +41,7 @@ class Schema {
     type = 'component',
     root = null,
     params = null,
+    subschemas = [],
   }) {
     this.id = id;
     this.slug = slug;
@@ -46,6 +50,7 @@ class Schema {
     this.root = this.constructor.parse(root) || new this.constructor.Component({
       name: 'HTML.div',
     });
+    this.subschemas = subschemas;
     this.isSchema = true;
 
     // eslint-disable-next-line no-prototype-builtins

@@ -29,8 +29,8 @@ const configure = ({
     // eslint-disable-next-line no-undef
     version: __NEBO_VERSION__,
   });
-  Component.directory = directory;
-  Renderer.directory = directory;
+  Object.assign(Component, { directory, React: react });
+  Object.assign(Renderer, { directory, React: react });
 
   if (isNebo()) window.ComponentDirectory = directory;
 

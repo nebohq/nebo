@@ -23,6 +23,17 @@ class Component {
     });
   }
 
+  isVoid() {
+    if (this.body?.type?.name === 'node') return false;
+
+    const children = [...(this.children || [])];
+    while (children.length > 0) {
+      const child = children.shift();
+      if (!child.isVoid()) return false;
+    }
+    return true;
+  }
+
   toJSON() {
     return {
       id: this.id,

@@ -1,5 +1,6 @@
 import htmlTags from 'html-tags';
 import voidHtmlTags from 'html-tags/void';
+import { isEqual } from 'lodash';
 import Prop from './Prop';
 import Type from './Type';
 import { canUseDOM, kebabCase } from './Utils';
@@ -25,6 +26,8 @@ HTML.getComponent = (react, tag) => {
     const ref = react.useRef(null);
 
     const useLayoutEffect = canUseDOM ? react.useLayoutEffect : () => {};
+    const [previousStyle, setPreviousStyle] = react.useState(null);
+
     useLayoutEffect(() => {
       if (!ref.current) return;
 
@@ -32,10 +35,13 @@ HTML.getComponent = (react, tag) => {
       node.classList.remove(...node.classList);
       if (className) node.classList.add(...className.split(' ').filter(Boolean));
 
-      node.style = {};
-      Object.entries(style || {}).forEach(([attribute, value]) => {
-        node.style.setProperty(kebabCase(attribute), value, 'important');
-      });
+      if (style && !isEqual(previousStyle, style)) {
+        node.removeAttribute('style');
+        Object.entries(style || {}).forEach(([attribute, value]) => {
+          node.style.setProperty(kebabCase(attribute), value, 'important');
+        });
+        setPreviousStyle(style);
+      }
       if (forwardedRef) forwardedRef.current = ref.current;
     }, [ref.current, style, className]);
 
