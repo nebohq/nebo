@@ -32,8 +32,12 @@ HTML.getComponent = (react, tag) => {
       if (!ref.current) return;
 
       const node = ref.current;
-      node.classList.remove(...node.classList);
-      if (className) node.classList.add(...className.split(' ').filter(Boolean));
+      const newClassList = (className || '').split(' ').filter(Boolean);
+      const existingClassList = [...node.classList];
+      if (!isEqual([...newClassList].sort(), [...existingClassList].sort())) {
+        node.removeAttribute('class');
+        node.classList.add(...newClassList);
+      }
 
       if (style && !isEqual(previousStyle, style)) {
         node.removeAttribute('style');

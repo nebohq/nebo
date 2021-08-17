@@ -4,7 +4,7 @@ const Head = ({ schema }) => {
   const { metadata = {} } = schema;
   const { React } = Head;
 
-  const components = Object.entries(metadata).map(([attribute, value]) => {
+  return Object.entries(metadata).map(([attribute, value]) => {
     let component;
     if (attribute === 'title') {
       component = React.createElement('title', { key: `meta-${attribute}` }, value);
@@ -17,8 +17,6 @@ const Head = ({ schema }) => {
     }
     return component;
   });
-
-  return React.createElement(React.Fragment, {}, components);
 };
 
 const useHead = ({ schema, contentWindow }) => {
