@@ -1,6 +1,8 @@
 import Directory from './Directory';
 import Component from './Component';
 import Renderer from './Renderer';
+import Head from './Head';
+import Registry from './Registry';
 import { ContentWindow } from './Utils';
 
 const window = ContentWindow;
@@ -29,8 +31,17 @@ const configure = ({
     // eslint-disable-next-line no-undef
     version: __NEBO_VERSION__,
   });
-  Object.assign(Component, { directory, React: react });
-  Object.assign(Renderer, { directory, React: react });
+  const reactComponents = [Component, Renderer, Head];
+  reactComponents.forEach((registration) => {
+    Object.assign(registration, { directory, React: react });
+  });
+  Object.assign(directory, {
+    NeboComponent: Component,
+    Component,
+    NeboHead: Head,
+    Registry,
+    Renderer,
+  });
 
   if (isNebo()) window.ComponentDirectory = directory;
 

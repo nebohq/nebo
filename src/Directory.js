@@ -1,10 +1,6 @@
-import Renderer from './Renderer';
-import Component from './Component';
-import Registry from './Registry';
 import Schema from './Schema';
 import { associatePropType, Storage } from './Utils';
 import HTML from './HTML';
-import useHead from './Renderer/useHead';
 import ComponentStore from './Component/Store';
 
 class Directory {
@@ -33,9 +29,6 @@ class Directory {
 
     this.cacheForMillis = cacheForMillis;
     this.neboComponents = new ComponentStore({ React: react, schemaCache: this.schemaCache });
-    this.Renderer = Renderer;
-    this.Registry = Registry;
-    this.Component = Component;
   }
 
   get schemas() {
@@ -60,11 +53,6 @@ class Directory {
     if (this.neboComponents.get(nameOrId)) return this.neboComponents.get(nameOrId);
 
     return this.neboComponents.store(nameOrId);
-  }
-
-  getHead(metadata = null) {
-    if (metadata) return new useHead.State(metadata, this.React);
-    return useHead.state;
   }
 
   convert(components) {
