@@ -89,7 +89,7 @@ Renderer.convert = ({
   component, options, passed,
 }) => {
   const {
-    id, name, body, children,
+    id, name, children,
   } = component;
   const { directory, registry } = options;
   const {
@@ -107,12 +107,10 @@ Renderer.convert = ({
     })
   ));
 
-  if (!body.isEmpty() || directory.React.Children.toArray(passedChildren).length !== 0) {
-    const convertedBody = Renderer.convertBody({
-      options, component, passedProps, passedChildren,
-    });
-    convertedChildren.push(...convertedBody);
-  }
+  const convertedBody = Renderer.convertBody({
+    options, component, passedProps, passedChildren,
+  });
+  convertedChildren.push(...convertedBody);
 
   const convertedProps = Renderer.convertProps({ component, options, passedProps });
   const propStyle = convertedProps.style || {};
@@ -148,12 +146,14 @@ Renderer.convert = ({
 };
 
 Renderer.convertBody = ({
-  options, component, passedProps, passedChildren,
+  component, options, passedProps, passedChildren,
 }) => {
   const { id, body } = component;
   const { directory, parametrizer, params } = options;
 
   if (body.type.name === 'markdown') {
+    if (body.isEmpty()) return [];
+
     const text = parametrizer({
       params,
       id,
@@ -161,6 +161,7 @@ Renderer.convertBody = ({
       prop: body,
       passedProps,
     });
+
     const markdown = Renderer.makeHTMLFromMarkdown(text);
     return [
       directory.React.createElement('span', {
@@ -168,9 +169,12 @@ Renderer.convertBody = ({
         dangerouslySetInnerHTML: { __html: markdown.replace(/^<p>|<\/p>$/g, '') },
       }),
     ];
-  } if (body.type.name === 'node' && passedChildren) {
+  }
+
+  if (body.type.name === 'node' && passedChildren) {
     return [passedChildren];
   }
+
   return [
     parametrizer({
       params,
@@ -179,7 +183,7 @@ Renderer.convertBody = ({
       prop: body,
       passedProps,
     }),
-  ];
+  ].filter(Boolean);
 };
 
 Renderer.convertProps = ({ component, options, passedProps }) => {
