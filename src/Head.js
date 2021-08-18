@@ -31,7 +31,7 @@ const useHead = ({ schema, contentWindow }) => {
     let head = contentWindow.document.querySelector('head');
     if (!head) {
       head = contentWindow.document.createElement('head');
-      document.body.prepend(head);
+      document.prepend(head);
     }
 
     const elements = Object.entries(metadata).map(([attribute, value]) => {
@@ -49,7 +49,10 @@ const useHead = ({ schema, contentWindow }) => {
       return element;
     });
 
-    elements.forEach((element) => head.appendChild(element));
+    elements.forEach((element) => {
+      if (head.contains(element)) return;
+      head.appendChild(element);
+    });
     setCurrentMetadata((previous) => {
       const previousAttributes = Object.keys(previous);
       const currentAttributes = new Set(Object.keys(metadata));
