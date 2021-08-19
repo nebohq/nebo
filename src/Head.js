@@ -1,10 +1,10 @@
 import { canUseDOM } from './Utils';
 
-const Head = ({ schema }) => {
+const Head = ({ schema, wrapper: Wrapper = null }) => {
   const { metadata = {} } = schema;
   const { React } = Head;
 
-  return Object.entries(metadata).map(([attribute, value]) => {
+  const components = Object.entries(metadata).map(([attribute, value]) => {
     let component;
     if (attribute === 'title') {
       component = React.createElement('title', { key: `meta-${attribute}` }, value);
@@ -17,6 +17,9 @@ const Head = ({ schema }) => {
     }
     return component;
   });
+
+  if (Wrapper) return React.createElement(Wrapper, {}, components);
+  return components;
 };
 
 const useHead = ({ schema, contentWindow }) => {
