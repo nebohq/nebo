@@ -35,7 +35,7 @@ const useHead = ({ schema, contentWindow }) => {
 
   const [_metadataState, setMetadataState] = React.useState({
     current: {},
-    previous: null,
+    previous: {},
   });
 
   React.useEffect(() => {
