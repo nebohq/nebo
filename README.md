@@ -35,7 +35,7 @@ npx nebo init --access-token=your-access-token --public-path=./path/to/static/as
 yarn run nebo init --access-token=your-access-token --public-path=./path/to/static/assets --global-styles-path=./src/stylesheets/application.scss
 ```
 
-5. This will generate two files: `nebo.js` and `nebo.js`. We'll use the first to import components and the latter output Nebo assets for use in settings.
+5. This will generate two files: `nebo.config.js` and `nebo.js`. We'll use the first to import components and the latter output Nebo assets for use in settings.
 
 6. You're ready to build pages!
 
