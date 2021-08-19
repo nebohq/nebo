@@ -1,6 +1,6 @@
 {
   "name": "@nebohq/nebo",
-  "version": "0.2.2-alpha.0",
+  "version": "0.2.2",
   "description": "Builds embeddable components from https://nebohq.com",
   "main": "lib/cjs/index.js",
   "module": "src/index.js",
@@ -23,7 +23,7 @@
   "author": "Nebo Engineering",
   "dependencies": {
     "@babel/runtime": "^7.14.0",
-    "@nebohq/plugin": "^0.1.7",
+    "@nebohq/plugin": "^0.2.1",
     "html-tags": "^3.1.0",
     "lodash": "^4.17.21",
     "prop-types": "^15.7.2",
