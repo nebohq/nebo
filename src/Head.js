@@ -1,3 +1,5 @@
+import { canUseDOM } from './Utils';
+
 const Head = ({ schema }) => {
   const { metadata = {} } = schema;
   const { React } = Head;
@@ -21,6 +23,8 @@ const useHead = ({ schema, contentWindow }) => {
   const { React } = Head;
 
   const head = React.useMemo(() => {
+    if (!canUseDOM) return null;
+
     let element = contentWindow.document.querySelector('head');
     if (!element) {
       element = contentWindow.document.createElement('head');
