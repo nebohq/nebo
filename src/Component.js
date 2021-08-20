@@ -1,6 +1,4 @@
-import {
-  ContentWindow, isNullish, fetchComponent, canUseDOM,
-} from './Utils';
+import { ContentWindow, isNullish, fetchComponent } from './Utils';
 import Schema from './Schema';
 import Renderer from './Renderer';
 import Registry from './Registry';
@@ -51,27 +49,21 @@ const Component = ({
 
 Component.useSchema = ({ lookupBy, passedSchema }) => {
   const { schemas: schemaCache } = Component.directory;
-  const [isClient, setIsClient] = Component.React.useState(false);
   const computedSchema = Component.React.useMemo(() => {
     let schema = passedSchema || schemaCache[lookupBy] || null;
-    if (isClient) schema = schemaCache[lookupBy] || schema;
     if (!isNullish(schema)) schema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
 
     return schema;
-  }, [lookupBy, passedSchema, isClient]);
+  }, [lookupBy, passedSchema]);
 
   const [activeSchema, setSchema] = Component.React.useState(() => {
-    Component.cache({ schema: computedSchema });
+    Component.cache({ schema: computedSchema, self: false });
     return computedSchema;
   });
   const setActiveSchema = (schema) => {
-    if (isClient) Component.cache({ schema });
+    Component.cache({ schema });
     setSchema(schema);
   };
-
-  Component.React.useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   Component.React.useEffect(() => {
     setActiveSchema(computedSchema);
@@ -95,16 +87,20 @@ Component.useShouldFetch = ({ forceFetch, activeSchema, lookupBy }) => {
   return [shouldFetch, setShouldFetch];
 };
 
-Component.cache = ({ schema }) => {
+Component.cache = ({ schema, self = true, subschemas = true }) => {
   if (!schema) return;
 
   const { schemas: schemaCache, neboComponents } = Component.directory;
 
-  schemaCache[schema.id] = schema;
-  schemaCache[schema.slug] = schema;
-  schema.subschemas.forEach((subschema) => {
-    Component.cache({ schema: subschema });
-  });
+  if (self) {
+    schemaCache[schema.id] = schema;
+    schemaCache[schema.slug] = schema;
+  }
+  if (subschemas) {
+    schema.subschemas.forEach((subschema) => {
+      Component.cache({ schema: subschema, subschemas: false });
+    });
+  }
 
   neboComponents.store(schema.id, { schema, cacheKeys: [schema.id, schema.slug] });
 };
