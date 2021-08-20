@@ -51,22 +51,27 @@ const Component = ({
 
 Component.useSchema = ({ lookupBy, passedSchema }) => {
   const { schemas: schemaCache } = Component.directory;
+  const [isClient, setIsClient] = Component.React.useState(false);
   const computedSchema = Component.React.useMemo(() => {
     let schema = passedSchema || null;
-    if (canUseDOM) schema = schemaCache[lookupBy] || schema;
+    if (isClient) schema = schemaCache[lookupBy] || schema;
     if (!isNullish(schema)) schema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
 
     return schema;
-  }, [lookupBy, passedSchema]);
+  }, [lookupBy, passedSchema, isClient]);
 
   const [activeSchema, setSchema] = Component.React.useState(() => {
     Component.cache({ schema: computedSchema });
     return computedSchema;
   });
   const setActiveSchema = (schema) => {
-    Component.cache({ schema });
+    if (isClient) Component.cache({ schema });
     setSchema(schema);
   };
+
+  Component.React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   Component.React.useEffect(() => {
     setActiveSchema(computedSchema);
