@@ -64,7 +64,7 @@ yarn run nebo init --access-token=your-access-token --public-path=./path/to/stat
 8. Once you've saved your page, import it in an appropriate place for your app.
 
 ```js
-import NeboComponent from './nebo.js'; // change this path to point to your Nebo directory configuration
+import NeboComponent from './nebo'; // change this path to point to your Nebo directory configuration
 
 const YourComponent = () => {
   return <NeboComponent slug="YOUR SLUG NAME HERE" />; 
@@ -72,7 +72,7 @@ const YourComponent = () => {
 ```
 
 ### Adding your styles
-1. Go to `nebo.js`.
+1. Go to `nebo.config.js`.
 
 2. Change the `globalStylesPath` option to point to your global styles.
 

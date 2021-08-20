@@ -1,4 +1,6 @@
-import { ContentWindow, isNullish, fetchComponent } from './Utils';
+import {
+  ContentWindow, isNullish, fetchComponent, canUseDOM,
+} from './Utils';
 import Schema from './Schema';
 import Renderer from './Renderer';
 import Registry from './Registry';
@@ -50,7 +52,8 @@ const Component = ({
 Component.useSchema = ({ lookupBy, passedSchema }) => {
   const { schemas: schemaCache } = Component.directory;
   const computedSchema = Component.React.useMemo(() => {
-    let schema = passedSchema || schemaCache[lookupBy] || null;
+    let schema = passedSchema || null;
+    if (canUseDOM) schema = schemaCache[lookupBy] || schema;
     if (!isNullish(schema)) schema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
 
     return schema;
