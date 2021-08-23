@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { ContentWindow, isNullish, fetchComponent } from './Utils';
 import Schema from './Schema';
 import Renderer from './Renderer';
@@ -49,24 +50,30 @@ const Component = ({
 
 Component.useSchema = ({ lookupBy, passedSchema }) => {
   const { schemas: schemaCache } = Component.directory;
+  const [isClient, setIsClient] = Component.React.useState(false);
+  Component.React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const computedSchema = Component.React.useMemo(() => {
-    let schema = passedSchema || schemaCache[lookupBy] || null;
+    const cachedSchema = schemaCache[lookupBy];
+    let schema = isClient ? (cachedSchema || passedSchema) : (passedSchema || cachedSchema);
     if (!isNullish(schema)) schema = schema?.isSchema ? schema : Schema.parseComponentJSON(schema);
 
     return schema;
-  }, [lookupBy, passedSchema]);
+  }, [lookupBy, passedSchema, isClient]);
 
   const [activeSchema, setSchema] = Component.React.useState(() => {
-    const keys = Component.cache({ schema: computedSchema });
-    if (computedSchema.id === passedSchema?.id) Component.expire({ keys });
-
+    Component.cache({ schema: Component, self: false });
     return computedSchema;
   });
+
   const setActiveSchema = (schema) => {
     setSchema((previous) => {
-      if (previous === schema) return previous;
+      if (isEqual(previous, schema)) return previous;
 
       Component.cache({ schema });
+
       return schema;
     });
   };
@@ -93,26 +100,21 @@ Component.useShouldFetch = ({ forceFetch, activeSchema, lookupBy }) => {
   return [shouldFetch, setShouldFetch];
 };
 
-Component.cache = ({ schema }) => {
+Component.cache = ({ schema, self = true }) => {
   if (!schema) return [];
 
   const { schemas: schemaCache, neboComponents } = Component.directory;
-  const cacheKeys = [schema.id, schema.slug];
-  cacheKeys.forEach((key) => {
-    schemaCache[key] = schema;
-  });
-  schema.subschemas.forEach((subschema) => (
-    Component.cache({ schema: subschema })
-  ));
-
+  const cacheKeys = [];
+  if (self) {
+    cacheKeys.push(schema.id, schema.slug);
+    cacheKeys.forEach((key) => {
+      schemaCache[key] = schema;
+    });
+  }
+  schema.subschemas.forEach((subschema) => Component.cache({ schema: subschema }));
   neboComponents.store(schema.id, { schema, cacheKeys });
-  return cacheKeys;
-};
 
-Component.expire = ({ keys }) => {
-  const { schemas: schemaCache } = Component.directory;
-  keys.forEach((key) => schemaCache.expire(key));
-  return keys;
+  return cacheKeys;
 };
 
 Component.types = {
