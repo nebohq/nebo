@@ -57,12 +57,18 @@ Component.useSchema = ({ lookupBy, passedSchema }) => {
   }, [lookupBy, passedSchema]);
 
   const [activeSchema, setSchema] = Component.React.useState(() => {
-    Component.cache({ schema: computedSchema, self: false });
+    const keys = Component.cache({ schema: computedSchema });
+    if (computedSchema.id === passedSchema?.id) Component.expire({ keys });
+
     return computedSchema;
   });
   const setActiveSchema = (schema) => {
-    Component.cache({ schema });
-    setSchema(schema);
+    setSchema((previous) => {
+      if (previous === schema) return previous;
+
+      Component.cache({ schema });
+      return schema;
+    });
   };
 
   Component.React.useEffect(() => {
@@ -87,22 +93,26 @@ Component.useShouldFetch = ({ forceFetch, activeSchema, lookupBy }) => {
   return [shouldFetch, setShouldFetch];
 };
 
-Component.cache = ({ schema, self = true, subschemas = true }) => {
-  if (!schema) return;
+Component.cache = ({ schema }) => {
+  if (!schema) return [];
 
   const { schemas: schemaCache, neboComponents } = Component.directory;
+  const cacheKeys = [schema.id, schema.slug];
+  cacheKeys.forEach((key) => {
+    schemaCache[key] = schema;
+  });
+  const subschemaCacheKeys = schema.subschemas.flatMap((subschema) => (
+    Component.cache({ schema: subschema })
+  ));
 
-  if (self) {
-    schemaCache[schema.id] = schema;
-    schemaCache[schema.slug] = schema;
-  }
-  if (subschemas) {
-    schema.subschemas.forEach((subschema) => {
-      Component.cache({ schema: subschema, subschemas: false });
-    });
-  }
+  neboComponents.store(schema.id, { schema, cacheKeys });
+  return [...cacheKeys, ...subschemaCacheKeys];
+};
 
-  neboComponents.store(schema.id, { schema, cacheKeys: [schema.id, schema.slug] });
+Component.expire = ({ keys }) => {
+  const { schemas: schemaCache } = Component.directory;
+  keys.forEach((key) => schemaCache.expire(key));
+  return keys;
 };
 
 Component.types = {
