@@ -33,7 +33,7 @@ const Storage = (storageKey, {
   );
 
   const isCacheExpired = (key, atTime = new Date()) => (
-    (atTime - objectsCachedAt[key]) > cacheForMillis
+    (atTime - (objectsCachedAt[key] || new Date(0))) > cacheForMillis
   );
   const expireCache = (key) => {
     delete objectsCachedAt[key];
