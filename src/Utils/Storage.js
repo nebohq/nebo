@@ -4,7 +4,7 @@ const { localStorage } = ContentWindow;
 const Storage = (storageKey, {
   parser: passedParser = (value) => value,
   override = null,
-  cacheFor: cacheForMillis,
+  cacheFor: cacheForMillis = 0,
 }) => {
   const getKeyAsObject = (key) => (
     JSON.parse(localStorage.getItem(key) || 'null') || {}
@@ -33,7 +33,7 @@ const Storage = (storageKey, {
   );
 
   const isCacheExpired = (key, atTime = new Date()) => (
-    (atTime - (objectsCachedAt[key] || new Date(0))) > cacheForMillis
+    (atTime - (objectsCachedAt[key] || new Date(0))) > (cacheForMillis || 0)
   );
   const expireCache = (key) => {
     delete objectsCachedAt[key];

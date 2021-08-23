@@ -101,12 +101,12 @@ Component.cache = ({ schema }) => {
   cacheKeys.forEach((key) => {
     schemaCache[key] = schema;
   });
-  const subschemaCacheKeys = schema.subschemas.flatMap((subschema) => (
+  schema.subschemas.forEach((subschema) => (
     Component.cache({ schema: subschema })
   ));
 
   neboComponents.store(schema.id, { schema, cacheKeys });
-  return [...cacheKeys, ...subschemaCacheKeys];
+  return cacheKeys;
 };
 
 Component.expire = ({ keys }) => {
