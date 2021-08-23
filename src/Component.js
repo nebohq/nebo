@@ -111,7 +111,10 @@ Component.cache = ({ schema, self = true }) => {
       schemaCache[key] = schema;
     });
   }
-  schema.subschemas.forEach((subschema) => Component.cache({ schema: subschema }));
+  schema.subschemas.forEach((subschema) => {
+    if (subschema.id === schema.id) return;
+    Component.cache({ schema: subschema });
+  });
   neboComponents.store(schema.id, { schema, cacheKeys });
 
   return cacheKeys;

@@ -35,16 +35,12 @@ const Storage = (storageKey, {
   const isCacheExpired = (key, atTime = new Date()) => (
     (atTime - (objectsCachedAt[key] || new Date(0))) > (cacheForMillis || 0)
   );
-  const expireCache = (key) => {
-    delete objectsCachedAt[key];
-  };
 
   return new Proxy(storage, {
     get: (target, property) => {
       if (property === 'cachedAt') return objectsCachedAt;
       if (property === 'parser') return parser;
       if (property === 'isExpired') return isCacheExpired;
-      if (property === 'expire') return expireCache;
 
       return property in target ? parser(target[property]) : undefined;
     },
