@@ -64,7 +64,7 @@ Component.useSchema = ({ lookupBy, passedSchema }) => {
   }, [lookupBy, passedSchema, isClient]);
 
   const [activeSchema, setSchema] = Component.React.useState(() => {
-    Component.cache({ schema: Component, self: false });
+    Component.cache({ schema: computedSchema, self: false });
     return computedSchema;
   });
 
