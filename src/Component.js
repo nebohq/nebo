@@ -43,6 +43,7 @@ const Component = ({
       registry,
       contentWindow,
       shouldFetch: nebo.shouldFetch,
+      ...(!!nebo.stylesheet && { stylesheet: nebo.stylesheet }),
     },
     ...props,
   }, children);

@@ -1,11 +1,9 @@
 import { Converter } from 'showdown';
-import { merge } from 'lodash';
 import Registry from './Registry';
-import {
-  displaySizes, classNames, capitalize, ContentWindow,
-} from './Utils';
+import { displaySizes, classNames, ContentWindow } from './Utils';
 import Parametrizer from './Renderer/Parametrizer';
 import { useHead } from './Head';
+import Stylesheet from './Renderer/Stylesheet';
 
 const Renderer = ({
   nebo, children, className, style, ...props
@@ -17,9 +15,16 @@ const Renderer = ({
     shouldFetch = true,
     registry = new Registry(),
     contentWindow = ContentWindow,
+    parametrizer = Renderer.parametrize,
   } = nebo;
 
   const { size } = Renderer.useMatchMedia(directory, contentWindow.matchMedia);
+  const stylesheet = nebo.stylesheet || new Stylesheet({
+    parametrizer,
+    params: schema.params,
+    passedProps: props,
+    componentId: schema.root.id,
+  });
   useHead({ schema, contentWindow });
   registry.dequeueClear();
 
@@ -30,10 +35,11 @@ const Renderer = ({
       registry,
       size,
       params: schema.params,
-      parametrizer: Renderer.parametrize,
+      parametrizer,
       contentWindow,
       shouldCache,
       shouldFetch,
+      stylesheet,
     },
     passed: {
       style,
@@ -61,9 +67,9 @@ Renderer.useMatchMedia = (directory, matchMedia) => {
     };
   }, {}), []);
 
-  const [currentSize, setSize] = directory.React.useState(
-    sizes.find(({ media }) => media.matches),
-  );
+  const [currentSize, setSize] = directory.React.useState(() => (
+    sizes.find(({ media }) => media.matches)
+  ));
 
   directory.React.useEffect(() => {
     sizes.forEach((size) => {
@@ -87,7 +93,7 @@ Renderer.convert = ({
   const {
     id, name, children,
   } = component;
-  const { directory, registry } = options;
+  const { directory, registry, stylesheet } = options;
   const {
     props: passedProps,
     children: passedChildren,
@@ -111,14 +117,17 @@ Renderer.convert = ({
   const convertedProps = Renderer.convertProps({ component, options, passedProps });
   const propStyle = convertedProps.style || {};
   delete convertedProps.style;
-  const {
-    className: convertedClassName,
-    style: convertedStyle,
-  } = Renderer.convertStyleAndClassName({ component, options, passedProps });
+  const { className: convertedClassName } = Renderer.convertStyleAndClassName({
+    component, options, passedProps,
+  });
 
   const reactElementType = directory.get(name);
   const componentClassName = classNames(convertedClassName, passedClassName);
-  const componentStyle = { ...convertedStyle, ...propStyle, ...passedStyle };
+  const componentStyle = { ...propStyle, ...passedStyle };
+  if (id === stylesheet.componentId) {
+    convertedChildren.push(Stylesheet.Component(directory.React)({ key: id, stylesheet }));
+  }
+
   const reactComponent = directory.React.createElement(
     reactElementType,
     {
@@ -131,6 +140,7 @@ Renderer.convert = ({
           contentWindow: options.contentWindow,
           shouldCache: options.shouldCache,
           shouldFetch: options.shouldFetch,
+          stylesheet: options.stylesheet,
         },
       }),
       ...convertedProps,
@@ -200,9 +210,11 @@ Renderer.convertProps = ({ component, options, passedProps }) => {
 };
 
 Renderer.convertStyleAndClassName = ({ component, options, passedProps }) => {
-  const { parametrizer, params, size } = options;
+  const {
+    parametrizer, params, size, stylesheet,
+  } = options;
 
-  const parameterize = (prop) => parametrizer({
+  const parametrize = (prop) => parametrizer({
     id: component.id,
     params,
     sourceType: 'style',
@@ -210,36 +222,14 @@ Renderer.convertStyleAndClassName = ({ component, options, passedProps }) => {
     passedProps,
   });
 
-  const convertStyle = (
-    style,
-    existing = {},
-    nesting = [],
-  ) => Object.entries(style).reduce((acc, [attribute, prop]) => {
-    if (['className', 'media'].includes(attribute)) return acc;
-
-    if (prop?.isProp || typeof prop === 'string') {
-      const pieces = [...nesting, attribute];
-      const name = pieces.map((piece, i) => (i === 0 ? piece : capitalize(piece))).join('');
-      const value = parameterize(prop);
-      if (value) acc[name] = value;
-    } else {
-      convertStyle(style[attribute], existing, [...nesting, attribute]);
-    }
-    return acc;
-  }, existing);
-
   const mediaStyleSet = (component.style?.media || {})[size?.name || 'md'] || {};
+  const componentStyles = stylesheet.add(component, parametrize);
 
-  let className = component.style?.className && parameterize(component.style?.className, 'className');
-  if (mediaStyleSet.className) className = parameterize(mediaStyleSet.className, 'className');
+  let className = component.style?.className && parametrize(component.style?.className);
+  if (mediaStyleSet.className) className = parametrize(component.style?.className);
+  if (componentStyles) className = `${className ? `${className} ` : ''}${componentStyles.className}`;
 
-  return {
-    className,
-    style: merge(
-      convertStyle(component.style || {}),
-      convertStyle(mediaStyleSet),
-    ),
-  };
+  return { className };
 };
 
 Renderer.parametrize = Parametrizer;
