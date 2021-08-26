@@ -2,8 +2,8 @@ import { Converter } from 'showdown';
 import Registry from './Registry';
 import { displaySizes, classNames, ContentWindow } from './Utils';
 import Parametrizer from './Renderer/Parametrizer';
+import Stylesheet, { useStylesheet } from './Renderer/Stylesheet';
 import { useHead } from './Head';
-import Stylesheet from './Renderer/Stylesheet';
 
 const Renderer = ({
   nebo, children, className, style, ...props
@@ -19,35 +19,42 @@ const Renderer = ({
   } = nebo;
 
   const { size } = Renderer.useMatchMedia(directory, contentWindow.matchMedia);
-  const stylesheet = nebo.stylesheet || new Stylesheet({
+  const stylesheet = useStylesheet(Renderer.React)({
+    schema,
     parametrizer,
-    params: schema.params,
+    schemaCache: directory.schemas,
     passedProps: props,
-    componentId: schema.root.id,
+    passedStylesheet: nebo.stylesheet,
   });
   useHead({ schema, contentWindow });
   registry.dequeueClear();
 
-  return Renderer.convert({
-    component: schema.root,
-    options: {
-      directory,
-      registry,
-      size,
-      params: schema.params,
-      parametrizer,
-      contentWindow,
-      shouldCache,
-      shouldFetch,
+  return [
+    Renderer.convert({
+      component: schema.root,
+      options: {
+        directory,
+        registry,
+        size,
+        params: schema.params,
+        parametrizer,
+        contentWindow,
+        shouldCache,
+        shouldFetch,
+        stylesheet,
+      },
+      passed: {
+        style,
+        children,
+        props,
+        className,
+      },
+    }),
+    stylesheet.shouldRender(schema.root) && Stylesheet.Component(Renderer.React)({
+      key: `stylesheet-${stylesheet.componentId}`,
       stylesheet,
-    },
-    passed: {
-      style,
-      children,
-      props,
-      className,
-    },
-  });
+    }),
+  ].filter(Boolean);
 };
 
 Renderer.useMatchMedia = (directory, matchMedia) => {
@@ -93,7 +100,7 @@ Renderer.convert = ({
   const {
     id, name, children,
   } = component;
-  const { directory, registry, stylesheet } = options;
+  const { directory, registry } = options;
   const {
     props: passedProps,
     children: passedChildren,
@@ -124,9 +131,6 @@ Renderer.convert = ({
   const reactElementType = directory.get(name);
   const componentClassName = classNames(convertedClassName, passedClassName);
   const componentStyle = { ...propStyle, ...passedStyle };
-  if (id === stylesheet.componentId) {
-    convertedChildren.push(Stylesheet.Component(directory.React)({ key: id, stylesheet }));
-  }
 
   const reactComponent = directory.React.createElement(
     reactElementType,
@@ -223,7 +227,7 @@ Renderer.convertStyleAndClassName = ({ component, options, passedProps }) => {
   });
 
   const mediaStyleSet = (component.style?.media || {})[size?.name || 'md'] || {};
-  const componentStyles = stylesheet.add(component, parametrize);
+  const componentStyles = stylesheet.get(component);
 
   let className = component.style?.className && parametrize(component.style?.className);
   if (mediaStyleSet.className) className = parametrize(component.style?.className);
