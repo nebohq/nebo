@@ -1,6 +1,9 @@
 import { Converter } from 'showdown';
+import { merge } from 'lodash';
 import Registry from './Registry';
-import { displaySizes, classNames, ContentWindow } from './Utils';
+import {
+  displaySizes, classNames, ContentWindow, capitalize,
+} from './Utils';
 import Parametrizer from './Renderer/Parametrizer';
 import Stylesheet, { useStylesheet } from './Renderer/Stylesheet';
 import { useHead } from './Head';
@@ -124,13 +127,16 @@ Renderer.convert = ({
   const convertedProps = Renderer.convertProps({ component, options, passedProps });
   const propStyle = convertedProps.style || {};
   delete convertedProps.style;
-  const { className: convertedClassName } = Renderer.convertStyleAndClassName({
+  const {
+    className: convertedClassName,
+    style: convertedStyle,
+  } = Renderer.convertStyleAndClassName({
     component, options, passedProps,
   });
 
   const reactElementType = directory.get(name);
   const componentClassName = classNames(convertedClassName, passedClassName);
-  const componentStyle = { ...propStyle, ...passedStyle };
+  const componentStyle = { ...convertedStyle, ...propStyle, ...passedStyle };
 
   const reactComponent = directory.React.createElement(
     reactElementType,
@@ -229,11 +235,35 @@ Renderer.convertStyleAndClassName = ({ component, options, passedProps }) => {
   const mediaStyleSet = (component.style?.media || {})[size?.name || 'md'] || {};
   const componentStyles = stylesheet.get(component);
 
+  const convertStyle = (
+    style,
+    existing = {},
+    nesting = [],
+  ) => Object.entries(style).reduce((acc, [attribute, prop]) => {
+    if (['className', 'media'].includes(attribute)) return acc;
+
+    if (prop?.isProp || typeof prop === 'string') {
+      const pieces = [...nesting, attribute];
+      const name = pieces.map((piece, i) => (i === 0 ? piece : capitalize(piece))).join('');
+      const value = parametrize(prop);
+      if (value && value !== prop.value.toString()) acc[name] = value;
+    } else {
+      convertStyle(style[attribute], existing, [...nesting, attribute]);
+    }
+    return acc;
+  }, existing);
+
   let className = component.style?.className && parametrize(component.style?.className);
   if (mediaStyleSet.className) className = parametrize(component.style?.className);
   if (componentStyles) className = `${className ? `${className} ` : ''}${componentStyles.className}`;
 
-  return { className };
+  return {
+    className,
+    style: merge(
+      convertStyle(component.style),
+      convertStyle(mediaStyleSet),
+    ),
+  };
 };
 
 Renderer.parametrize = Parametrizer;

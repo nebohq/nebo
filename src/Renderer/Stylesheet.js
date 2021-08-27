@@ -165,7 +165,8 @@ Stylesheet.StyleExtractor = class StyleExtractor {
         const pieces = [...nesting, attribute];
         const name = pieces.map((piece, i) => (i === 0 ? piece : capitalize(piece))).join('');
         const value = parametrize(prop);
-        if (value) acc[name] = value;
+        // DO NOT CONVERT PARAMETRIZEABLE VALUES
+        if (value && prop.value.toString() === value) acc[name] = value;
       } else {
         this.flatten({
           style: style[attribute],
